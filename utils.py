@@ -63,7 +63,7 @@ def oneHotEncoding(labels):
 def convertToDataset(data,batch_size):
     train_data = tf.contrib.data.Dataset.from_tensor_slices((data['x_train'], data['y_train_enc']))
     train_data = train_data.batch(batch_size)
-    train_data = train_data.repeat(200)
+    train_data = train_data.repeat(100)
     train_data = train_data.shuffle(buffer_size=100,seed=100)# Batch size to use
     train_data_iterator = train_data.make_one_shot_iterator()
     return train_data_iterator
