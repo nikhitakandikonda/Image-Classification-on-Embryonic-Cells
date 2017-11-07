@@ -6,7 +6,6 @@ from dataLoad import dataLoad
 
 def neural_net(x,weights,biases,num_layers):
     # Hidden fully connected layer with 256 neurons
-    dropout_keep_prob = tf.placeholder(tf.float32)
     a = tf.add(tf.matmul(x, weights['h1']), biases['b1'])
     out = tf.nn.elu(a)
     for i in range(1,num_layers):
@@ -41,14 +40,14 @@ def fitMLP(layers,data,img_size_flat,num_classes,parameters):
     correct_prediction = tf.equal(tf.argmax(logits, 1), tf.argmax(y_true, 1))
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     saver = tf.train.Saver()
-    tfObject = {'x': x, 'y_true': y_true, 'optimizer': optimizer, 'y_pred_cls': y_pred_cls, 'accuracy': accuracy,
+    tfObject = {'x': x, 'y_true': y_true, 'optimizer': optimizer,'y_pred':y_pred, 'y_pred_cls': y_pred_cls, 'accuracy': accuracy,
                 'loss': loss, 'saver': saver}
 
     train_data = convertToDataset(data, parameters['batch_size'])
 
     session = tf.Session()
     session.run(tf.global_variables_initializer())
-    save_path, run_optimize = createCheckPoints(session, saver, 'MLP')
+    save_path, run_optimize = createCheckPoints(session, saver, parameters['name']+'/MLP')
     parameters['save_path'] = save_path
     if run_optimize:
         optimize(parameters, train_data, data, tfObjects=tfObject, session=session)

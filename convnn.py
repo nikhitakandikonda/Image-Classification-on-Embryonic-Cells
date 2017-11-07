@@ -2,7 +2,7 @@ import tensorflow as tf
 import prettytensor as pt
 
 
-from utils import optimize,print_test_accuracy,initializeParameters,createDataDict,convertToDataset,plot_graphs,plot_confusion_matrix,get_layer_output,get_weights_variable,plot_conv_weights,plot_layer_output,createCheckPoints
+from utils import plot_image,optimize,print_test_accuracy,initializeParameters,createDataDict,convertToDataset,plot_graphs,plot_confusion_matrix,get_layer_output,get_weights_variable,plot_conv_weights,plot_layer_output,createCheckPoints
 from dataLoad import dataLoad
 
 def new_weights(shape):
@@ -52,25 +52,29 @@ def fitCNN(img_shape,num_channels,num_classes,data,parameters):
     correct_prediction = tf.equal(y_pred_cls, y_true_cls)
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     saver = tf.train.Saver()
-    tfObject = {'x': x, 'y_true': y_true, 'optimizer': optimizer, 'y_pred_cls': y_pred_cls, 'accuracy': accuracy,'loss':loss,'saver':saver}
+    tfObject = {'x': x, 'y_true': y_true,'y_pred':y_pred, 'optimizer': optimizer, 'y_pred_cls': y_pred_cls, 'accuracy': accuracy,'loss':loss,'saver':saver}
     training_data = convertToDataset(data, parameters['batch_size'])
     session = tf.Session()
     session.run(tf.global_variables_initializer())
-    save_path,run_optimize = createCheckPoints(session, saver, 'cnn')
+    save_path,run_optimize = createCheckPoints(session, saver, parameters['name']+'/cnn')
     parameters['save_path'] = save_path
     if run_optimize:
         optimize(parameters,training_data,data,session,tfObject)
     pred_labels,acc = print_test_accuracy(data,250,tfObject,session)
     weights_conv1 = get_weights_variable(layer_name='layer_conv1')
     weights_conv2 = get_weights_variable(layer_name='layer_conv2')
+    weights_conv3 = get_weights_variable(layer_name='layer_conv3')
     output_conv1 = get_layer_output(layer_name='layer_conv1')
     output_conv2 = get_layer_output(layer_name='layer_conv2')
+    output_conv3 = get_layer_output(layer_name='layer_conv3')
     plot_conv_weights(weights=weights_conv1,session=session, input_channel=0)
     plot_conv_weights(weights=weights_conv2,session=session, input_channel=0)
+    plot_conv_weights(weights=weights_conv3, session=session, input_channel=0)
     img = data['x_test'][10]
-    #plot_image(img.reshape(img_shape))
+    plot_image(img.reshape(img_shape),2008,data['y_test'][10])
     plot_layer_output(output_conv1, img,session,tfObject)
     plot_layer_output(output_conv2, img,session,tfObject)
+    plot_layer_output(output_conv3, img, session, tfObject)
     session.close()
     return pred_labels,acc
 
@@ -80,11 +84,13 @@ if __name__=="__main__":
     bbs_shape = (40,20)
     num_classes = 2
     bbs_data = createDataDict(bbs_train, labels)
-    parameters = initializeParameters(learning_rate=1e-4, training_epochs=500, batch_size=300,display_size=50)
+    parameters = initializeParameters(name='imgs', learning_rate=1e-4, training_epochs=1000, batch_size=300,
+                                      display_size=50)
     fitCNN(bbs_shape,1,num_classes,bbs_data,parameters)
     # imgs_data = createDataDict(imgs_train, labels)
-    # parameters = initializeParameters(learning_rate=1e-4, training_epochs=1000, batch_size=300, display_size=50)
-    # fitCNN(imgs_shape, 1, num_classes,imgs_data, parameters)
+    # parameters = initializeParameters(name='imgs', learning_rate=1e-4, training_epochs=1000, batch_size=300,
+    #                                   display_size=50)
+    # CNN_pred, CNN_acc = fitCNN(imgs_shape, 1, num_classes, imgs_data, parameters)
 
 
 

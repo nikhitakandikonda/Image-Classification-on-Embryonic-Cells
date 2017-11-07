@@ -12,10 +12,10 @@ from datetime import timedelta
 
 
 def createCheckPoints(session,saver,model):
-    save_dir = 'checkpoints/'
+    save_dir = 'checkpoints/'+model
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-    save_path = os.path.join(save_dir, model)
+    save_path = os.path.join(save_dir)
     print(save_path)
     try:
         print("Trying to restore last checkpoint ...")
@@ -35,7 +35,7 @@ def createCheckPoints(session,saver,model):
         print("Failed to restore checkpoint. Initializing variables instead.")
         session.run(tf.global_variables_initializer())
         run_optimize = True
-    return save_path,run_optimize
+    return save_dir,run_optimize
 
 def plot_images(images, cls, img_shape,cls_pred=None):
     plt.interactive(False)
@@ -74,10 +74,11 @@ def plot_image(image,i,class_idx):
     plt.savefig(results_dir+str(i)+'.png')
     plt.close()
 
-def plot_graphs(train_losses,train_acc,val_losses, val_acc,title,parameters):
+def plot_graphs(train_losses,train_acc,val_losses, val_acc,parameters):
     scale = np.arange(0, parameters['training_epochs'], parameters['display_size'])
 
     plt.subplot(2, 1, 1)
+    plt.ylim(min(train_losses) ,max(train_losses))
     plt.plot(scale, train_losses, label='Train')
     plt.plot(scale, val_losses, label='Validation')
     plt.xlabel('Epochs')
@@ -102,17 +103,17 @@ def initialize_x_y(img_size_flat,num_classes):
     y_true_cls = tf.argmax(y_true, dimension=1)
     return x,y_true,y_true_cls
 
-def initializeParameters(learning_rate,training_epochs,batch_size,display_size):
+def initializeParameters(name,learning_rate,training_epochs,batch_size,display_size):
     learning_rate = learning_rate
     training_epochs = training_epochs
     batch_size = batch_size
     display_size =display_size
-    parameters ={'learning_rate':learning_rate,'training_epochs':training_epochs,'batch_size':batch_size,'display_size':display_size}
+    parameters ={'name':name,'learning_rate':learning_rate,'training_epochs':training_epochs,'batch_size':batch_size,'display_size':display_size}
     return parameters
 
 def createDataDict(x,y):
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.20, random_state=42)
-    x_train,x_val,y_train,y_val = train_test_split(x_train, y_train, test_size=0.10, random_state=42)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.20)
+    x_train,x_val,y_train,y_val = train_test_split(x_train, y_train, test_size=0.10)
     data = {}
     data['x_train']=x_train
     data['x_test'] = x_test
@@ -201,7 +202,7 @@ def plot_confusion_matrix(cls_pred,cls_test,num_classes):
 
 
 
-def plot_conv_weights(weights,session, input_channel=0):
+def plot_conv_weights(weights,session, input_channel=1):
     # Assume weights are TensorFlow ops for 4-dim variables
     # e.g. weights_conv1 or weights_conv2.
 
@@ -240,8 +241,7 @@ def plot_conv_weights(weights,session, input_channel=0):
             img = w[:, :, input_channel, i]
 
             # Plot image.
-            ax.imshow(img, vmin=-abs_max, vmax=abs_max,
-                      interpolation='nearest', cmap='seismic')
+            ax.imshow(img,interpolation='nearest', cmap='Greys')
 
         # Remove ticks from the plot.
         ax.set_xticks([])
@@ -289,7 +289,7 @@ def plot_layer_output(layer_output, image,session,tfOjects):
 
             # Plot image.
             ax.imshow(img, vmin=values_min, vmax=values_max,
-                      interpolation='nearest', cmap='binary')
+                      interpolation='nearest', cmap='jet')
 
         # Remove ticks from the plot.
         ax.set_xticks([])
@@ -331,7 +331,7 @@ def print_test_accuracy(data,test_batch_size,tfObjects,session):
         # Create a feed-dict with these images and labels.
         feed_dict = {tfObjects['x']: images,
                      tfObjects['y_true']: labels}
-        pred_labels[i:j]=session.run(tfObjects['y_true'], feed_dict=feed_dict)
+        pred_labels[i:j]=session.run(tfObjects['y_pred'], feed_dict=feed_dict)
         # Calculate the predicted class using TensorFlow.
         cls_pred[i:j] = session.run(tfObjects['y_pred_cls'], feed_dict=feed_dict)
 
@@ -348,7 +348,7 @@ def print_test_accuracy(data,test_batch_size,tfObjects,session):
     #     if not classification:
     #         print(idx)
     #         print(str(cls_true[idx])+"------------->"+str(cls_pred[idx]))
-    #         plot_image(data['x_test'][idx].reshape(40,20),idx,cls_true[idx])
+    #         plot_image(data['x_test'][idx].reshape(60,12),idx,cls_true[idx])
     #         # output_conv2 = get_layer_output(layer_name='layer_conv3')
     #         # plot_layer_output(output_conv2, data['x_test'][idx], session, tfObjects)
 
@@ -424,4 +424,4 @@ def optimize(parameters,training_data,data,session,tfObjects):
     # Print the time-usage.
     print("Time usage: " + str(timedelta(seconds=int(round(time_dif)))))
 
-    plot_graphs(train_losses, train_accs, val_losses, val_accs, "CNN", parameters)
+    plot_graphs(train_losses, train_accs, val_losses, val_accs, parameters)

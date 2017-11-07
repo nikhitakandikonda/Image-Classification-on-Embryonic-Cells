@@ -18,13 +18,13 @@ def fitSimpleNN(img_size_flat,num_classes,data,parameters):
     correct_prediction = tf.equal(y_pred_cls, y_true_cls)
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
     saver = tf.train.Saver()
-    tfObject = {'x': x, 'y_true': y_true, 'optimizer': optimizer, 'y_pred_cls': y_pred_cls, 'accuracy': accuracy,
+    tfObject = {'x': x, 'y_true': y_true,'y_pred':y_pred, 'optimizer': optimizer, 'y_pred_cls': y_pred_cls, 'accuracy': accuracy,
                 'loss': loss, 'saver': saver}
     train_data = convertToDataset(data,parameters['batch_size'])
 
     session = tf.Session()
     session.run(tf.global_variables_initializer())
-    save_path, run_optimize = createCheckPoints(session, saver, 'Logistic Reg')
+    save_path, run_optimize = createCheckPoints(session, saver, parameters['name']+'/Logistic Reg')
     parameters['save_path'] = save_path
     if run_optimize:
         optimize(parameters,train_data,data,tfObjects=tfObject,session = session)
